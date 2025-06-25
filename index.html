@@ -41,8 +41,9 @@
       let calendar;
 
       // Set up correct plugin references for FullCalendar v6.x global builds
-      const dayGridPlugin = window.DayGrid;
-      const timeGridPlugin = window.TimeGrid;
+const dayGridPlugin = FullCalendar.DayGrid;
+const timeGridPlugin = FullCalendar.TimeGrid;
+
 
       async function loadEvents() {
         const sources = [
@@ -80,8 +81,8 @@
         }
         loadingEl.style.display = 'none';
 
-        calendar = new FullCalendar.Calendar(calendarEl, {
-          plugins: [dayGridPlugin, timeGridPlugin],
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+  plugins: [ FullCalendar.DayGrid, FullCalendar.TimeGrid ],
           initialView: 'dayGridMonth',
           timeZone: timezoneSelect.value,
           height: '80vh',
