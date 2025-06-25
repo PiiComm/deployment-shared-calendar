@@ -9,14 +9,19 @@
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
     #controls { max-width: 900px; margin: 20px auto; text-align: right; padding: 0 10px; }
+    #controls select, #controls button { margin-left: 8px; }
     #calendar { max-width: 900px; margin: 0 auto 40px; padding: 0 10px; }
     #loading { display: none; position: absolute; top: 10px; right: 10px; font-weight: bold; }
-    #refresh-btn { padding: 6px 12px; font-size: 14px; cursor: pointer; }
   </style>
 </head>
 <body>
   <div id="loading">Loading...</div>
   <div id="controls">
+    <label for="timezone-select">Timezone:</label>
+    <select id="timezone-select">
+      <option value="local">Local</option>
+      <option value="UTC">UTC</option>
+    </select>
     <button id="refresh-btn">Refresh Events</button>
   </div>
   <div id="calendar"></div>
@@ -25,20 +30,21 @@
     document.addEventListener('DOMContentLoaded', function() {
       var calendarEl = document.getElementById('calendar');
       var loadingEl = document.getElementById('loading');
+      var timezoneSelect = document.getElementById('timezone-select');
+      var calendar;
 
-      // Fetch events from local or GitHub raw JSON
+      // Fetch and normalize events
       async function loadEvents() {
-        var urls = [
+        const urls = [
           'events.json',
           'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json'
         ];
         for (let base of urls) {
-          let url = base + '?cb=' + Date.now();
+          const url = base + '?cb=' + Date.now();
           try {
-            let resp = await fetch(url);
+            const resp = await fetch(url);
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            let arr = await resp.json();
-            // Normalize timestamps (strip extra fractional seconds)
+            const arr = await resp.json();
             return arr.map(e => ({
               title: e.title,
               start: e.start.split('.')[0],
@@ -52,6 +58,7 @@
         throw new Error('All event sources failed');
       }
 
+      // Initialize calendar with events and current timezone
       async function initCalendar() {
         loadingEl.style.display = 'block';
         let events = [];
@@ -63,9 +70,9 @@
         }
         loadingEl.style.display = 'none';
 
-        var calendar = new FullCalendar.Calendar(calendarEl, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
-          timeZone: 'local',               // Display in browser's local time zone
+          timeZone: timezoneSelect.value,
           headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -77,7 +84,7 @@
             hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short'
           },
           eventClick: function(info) {
-            var s = info.event.start.toLocaleString();
+            const s = info.event.start.toLocaleString();
             alert(
               'Event: ' + info.event.title + '\n' +
               'Description: ' + (info.event.extendedProps.description || 'N/A') + '\n' +
@@ -85,23 +92,31 @@
             );
           }
         });
-
         calendar.render();
-
-        // Refresh handler
-        document.getElementById('refresh-btn').addEventListener('click', async function() {
-          loadingEl.style.display = 'block';
-          try {
-            var newEvents = await loadEvents();
-            calendar.removeAllEventSources();
-            calendar.addEventSource(newEvents);
-          } catch (err) {
-            alert('Error refreshing events.');
-          }
-          loadingEl.style.display = 'none';
-        });
       }
 
+      // Refresh events
+      async function refreshEvents() {
+        loadingEl.style.display = 'block';
+        try {
+          const newEvents = await loadEvents();
+          calendar.removeAllEventSources();
+          calendar.addEventSource(newEvents);
+        } catch (err) {
+          alert('Error refreshing events.');
+        }
+        loadingEl.style.display = 'none';
+      }
+
+      // Setup event handlers
+      timezoneSelect.addEventListener('change', function() {
+        if (calendar) {
+          calendar.setOption('timeZone', this.value);
+        }
+      });
+      document.getElementById('refresh-btn').addEventListener('click', refreshEvents);
+
+      // Kick off
       initCalendar();
     });
   </script>
