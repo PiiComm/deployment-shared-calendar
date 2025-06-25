@@ -4,8 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PiiComm Shared Calendar</title>
-  <!-- FullCalendar CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <!-- FullCalendar JS (injects its own CSS in v6+) --><script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
     #controls { max-width: 900px; margin: 20px auto; text-align: right; padding: 0 10px; }
@@ -21,8 +20,6 @@
   </div>
   <div id="calendar"></div>
 
-  <!-- FullCalendar JS -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var calendarEl = document.getElementById('calendar');
@@ -30,45 +27,26 @@
 
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         navLinks: true,
-        editable: false,
-        selectable: false,
-        loading: function(isLoading) {
-          loadingEl.style.display = isLoading ? 'block' : 'none';
-        },
-        eventSources: [
-          {
-            url: 'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json',
-            method: 'GET',
-            extraParams: function() {
-              return { _: Date.now() }; // prevent caching
-            },
-            failure: function() {
-              alert('There was an error while fetching events.');
-            }
-          }
-        ],
+        loading: function(isLoading) { loadingEl.style.display = isLoading ? 'block' : 'none'; },
+        eventSources: [{
+          url: 'events.json',            // serve from same origin
+          method: 'GET',
+          extraParams: function() { return { _: Date.now() }; }, // cache-busting
+          failure: function() { alert('Error fetching events. Make sure events.json is in this folder.'); }
+        }],
         eventClick: function(info) {
-          var start = info.event.start;
           alert(
             'Event: ' + info.event.title + '\n' +
             'Description: ' + (info.event.extendedProps.description || 'N/A') + '\n' +
-            'Starts: ' + start.toLocaleString()
+            'Starts: ' + info.event.start.toLocaleString()
           );
         }
       });
 
       calendar.render();
-
-      // Refresh button
-      document.getElementById('refresh-btn').addEventListener('click', function() {
-        calendar.refetchEvents();
-      });
+      document.getElementById('refresh-btn').addEventListener('click', function() { calendar.refetchEvents(); });
     });
   </script>
 </body>
