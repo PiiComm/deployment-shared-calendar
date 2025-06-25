@@ -8,10 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.min.css" rel="stylesheet">
-  <!-- FullCalendar JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/index.global.min.js"></script>
+  <!-- Favicon (optional, remove if not needed) -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
     #controls { display: flex; flex-wrap: wrap; justify-content: flex-end; max-width: 95vw; margin: 20px auto; padding: 0 10px; }
@@ -19,6 +17,10 @@
     #calendar { width: 95vw; height: 80vh; margin: 0 auto 40px; padding: 0 10px; }
     #loading { display: none; position: absolute; top: 10px; right: 10px; font-weight: bold; }
   </style>
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/index.global.min.js"></script>
 </head>
 <body>
   <div id="loading">Loading...</div>
@@ -31,19 +33,17 @@
     <button id="refresh-btn">Refresh Events</button>
   </div>
   <div id="calendar"></div>
-
   <script>
-    // Fix for FullCalendar global plugins
-    const dayGridPlugin = window.DayGrid;
-    const timeGridPlugin = window.TimeGrid;
-
     document.addEventListener('DOMContentLoaded', function() {
       const calendarEl = document.getElementById('calendar');
       const loadingEl = document.getElementById('loading');
       const timezoneSelect = document.getElementById('timezone-select');
       let calendar;
 
-      // Fetch events, clean trailing commas, parse JSON
+      // Set up correct plugin references for FullCalendar v6.x global builds
+      const dayGridPlugin = window.DayGrid;
+      const timeGridPlugin = window.TimeGrid;
+
       async function loadEvents() {
         const sources = [
           'events.json',
@@ -54,11 +54,11 @@
             const res = await fetch(src + '?cb=' + Date.now());
             if (!res.ok) throw new Error(res.statusText);
             let text = await res.text();
-            text = text.replace(/,\s*\]/g, ']');  // strip trailing commas
+            text = text.replace(/,\s*\]/g, ']');  // Clean up trailing commas if present
             const arr = JSON.parse(text);
             return arr.map(e => ({
               title: e.title,
-              start: e.start.split('.')[0],
+              start: e.start.split('.')[0],  // Remove microseconds for FullCalendar compatibility
               end: e.end.split('.')[0],
               description: e.description || ''
             }));
@@ -81,7 +81,7 @@
         loadingEl.style.display = 'none';
 
         calendar = new FullCalendar.Calendar(calendarEl, {
-          plugins: [ dayGridPlugin, timeGridPlugin ],
+          plugins: [dayGridPlugin, timeGridPlugin],
           initialView: 'dayGridMonth',
           timeZone: timezoneSelect.value,
           height: '80vh',
