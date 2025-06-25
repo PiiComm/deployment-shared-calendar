@@ -10,7 +10,7 @@
     body { margin: 0; padding: 0; font-family: sans-serif; }
     #controls { max-width: 900px; margin: 20px auto; text-align: right; padding: 0 10px; }
     #calendar { max-width: 900px; margin: 0 auto 40px; padding: 0 10px; }
-    #loading { display: none; position: absolute; top: 10px; right: 10px; }
+    #loading { display: none; position: absolute; top: 10px; right: 10px; font-weight: bold; }
     #refresh-btn { padding: 6px 12px; font-size: 14px; cursor: pointer; }
   </style>
 </head>
@@ -26,40 +26,79 @@
       var calendarEl = document.getElementById('calendar');
       var loadingEl = document.getElementById('loading');
 
-      var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-        navLinks: true,
-        loading: function(isLoading) { loadingEl.style.display = isLoading ? 'block' : 'none'; },
-        eventSources: [{
-          url: 'events.json',            // local file in same directory
-          method: 'GET',
-          extraParams: function() { return { _: Date.now() }; }, // cache-busting
-          failure: function() { alert('Error fetching events. Make sure events.json is present.'); },
-          eventDataTransform: function(eventData) {
-            // Strip excess fractional seconds (FullCalendar expects up to 3 digits)
-            if (eventData.start) {
-              eventData.start = eventData.start.split('.')[0];
-            }
-            if (eventData.end) {
-              eventData.end = eventData.end.split('.')[0];
-            }
-            return eventData;
+      // Attempt to fetch JSON from multiple sources
+      async function loadEvents() {
+        var urls = [
+          'events.json',
+          'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json'
+        ];
+        for (let base of urls) {
+          let url = base + '?cb=' + Date.now();
+          try {
+            let resp = await fetch(url);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            let arr = await resp.json();
+            // Normalize timestamps (strip extra fractional seconds)
+            return arr.map(e => ({
+              title: e.title,
+              start: e.start.split('.')[0],
+              end: e.end.split('.')[0],
+              description: e.description || ''
+            }));
+          } catch (err) {
+            console.warn('Failed to load events from', base, err);
           }
-        }],
-        eventClick: function(info) {
-          alert(
-            'Event: ' + info.event.title + '\n' +
-            'Description: ' + (info.event.extendedProps.description || 'N/A') + '\n' +
-            'Starts: ' + info.event.start.toLocaleString()
-          );
         }
-      });
+        throw new Error('All event sources failed');
+      }
 
-      calendar.render();
-      document.getElementById('refresh-btn').addEventListener('click', function() {
-        calendar.refetchEvents();
-      });
+      async function initCalendar() {
+        loadingEl.style.display = 'block';
+        let events = [];
+        try {
+          events = await loadEvents();
+        } catch (err) {
+          loadingEl.style.display = 'none';
+          return alert('Error loading events. Check console for details.');
+        }
+        loadingEl.style.display = 'none';
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          navLinks: true,
+          events: events,
+          eventClick: function(info) {
+            var s = info.event.start.toLocaleString();
+            alert(
+              'Event: ' + info.event.title + '\n' +
+              'Description: ' + (info.event.extendedProps.description || 'N/A') + '\n' +
+              'Starts: ' + s
+            );
+          }
+        });
+
+        calendar.render();
+
+        // Refresh handler
+        document.getElementById('refresh-btn').addEventListener('click', async function() {
+          loadingEl.style.display = 'block';
+          try {
+            var newEvents = await loadEvents();
+            calendar.removeAllEventSources();
+            calendar.addEventSource(newEvents);
+          } catch (err) {
+            alert('Error refreshing events.');
+          }
+          loadingEl.style.display = 'none';
+        });
+      }
+
+      initCalendar();
     });
   </script>
 </body>
