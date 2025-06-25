@@ -7,13 +7,16 @@
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <style>
     body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    #calendar { max-width: 900px; margin: 40px auto; }
     #refreshBtn { display: block; margin: 20px auto; padding: 8px 16px; font-size: 16px; }
+    #calendar-container { width: 95%; max-width: 1200px; margin: 20px auto; }
+    #calendar { width: 100%; }
   </style>
 </head>
 <body>
   <button id="refreshBtn">🔄 Refresh Calendar</button>
-  <div id='calendar'></div>
+  <div id="calendar-container">
+    <div id='calendar'></div>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -25,6 +28,8 @@
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         initialView: 'dayGridMonth',
+        height: window.innerHeight * 0.75,
+        aspectRatio: 1.2,
         events: 'https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json',
         eventClick: function(info) {
           alert(
@@ -36,6 +41,11 @@
       });
 
       calendar.render();
+
+      // Adjust height on window resize
+      window.addEventListener('resize', function() {
+        calendar.setOption('height', window.innerHeight * 0.75);
+      });
 
       // Hard refresh button (Ctrl+Shift+R)
       document.getElementById('refreshBtn').addEventListener('click', function() {
