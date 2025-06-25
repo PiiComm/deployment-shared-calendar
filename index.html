@@ -16,7 +16,7 @@
       var calendarEl = document.getElementById('calendar');
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        events: 'events.json',
+        events: 'https://deployment-shared-calendar.netlify.app/events.json',
         eventClick: function(info) {
           alert(
             'Event: ' + info.event.title + '\n' +
