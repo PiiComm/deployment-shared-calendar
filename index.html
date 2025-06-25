@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PiiComm Shared Calendar</title>
   <!-- FullCalendar CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.min.css" rel="stylesheet" />
-  <!-- FullCalendar JS (v6+ injects its own CSS) -->
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.min.css" rel="stylesheet">
+  <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
@@ -38,15 +38,15 @@
       let calendar;
 
       async function loadEvents() {
-        const urls = [
+        const sources = [
           'events.json',
           'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json'
         ];
-        for (const base of urls) {
+        for (const src of sources) {
           try {
-            const resp = await fetch(base + '?cb=' + Date.now());
-            if (!resp.ok) throw new Error(resp.statusText);
-            const arr = await resp.json();
+            const res = await fetch(src + '?cb=' + Date.now());
+            if (!res.ok) throw new Error(res.statusText);
+            const arr = await res.json();
             return arr.map(e => ({
               title: e.title,
               start: e.start.split('.')[0],
@@ -54,7 +54,7 @@
               description: e.description || ''
             }));
           } catch (err) {
-            console.warn('Failed to load from', base, err);
+            console.warn('Load failed:', src, err);
           }
         }
         throw new Error('All event sources failed');
@@ -67,7 +67,7 @@
           events = await loadEvents();
         } catch (err) {
           loadingEl.style.display = 'none';
-          return alert('Error loading events. Check console.');
+          return alert('Error loading events. See console.');
         }
         loadingEl.style.display = 'none';
 
@@ -75,22 +75,15 @@
           initialView: 'dayGridMonth',
           timeZone: timezoneSelect.value,
           height: '80vh',
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          },
+          headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
           navLinks: true,
           events: events,
-          eventTimeFormat: {
-            hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short'
-          },
+          eventTimeFormat: { hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short' },
           eventClick(info) {
             const s = info.event.start.toLocaleString();
             alert(`Event: ${info.event.title}\nDescription: ${info.event.extendedProps.description || 'N/A'}\nStarts: ${s}`);
           }
         });
-
         calendar.render();
       }
 
@@ -106,11 +99,8 @@
         loadingEl.style.display = 'none';
       }
 
-      timezoneSelect.addEventListener('change', () => {
-        if (calendar) calendar.setOption('timeZone', timezoneSelect.value);
-      });
+      timezoneSelect.addEventListener('change', () => calendar.setOption('timeZone', timezoneSelect.value));
       document.getElementById('refresh-btn').addEventListener('click', refreshEvents);
-
       initCalendar();
     });
   </script>
