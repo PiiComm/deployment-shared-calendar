@@ -8,12 +8,17 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
-    #calendar { max-width: 900px; margin: 40px auto; padding: 0 10px; }
+    #controls { max-width: 900px; margin: 20px auto; text-align: right; padding: 0 10px; }
+    #calendar { max-width: 900px; margin: 0 auto 40px; padding: 0 10px; }
     #loading { display: none; position: absolute; top: 10px; right: 10px; }
+    #refresh-btn { padding: 6px 12px; font-size: 14px; cursor: pointer; }
   </style>
 </head>
 <body>
   <div id="loading">Loading...</div>
+  <div id="controls">
+    <button id="refresh-btn">Refresh Events</button>
+  </div>
   <div id="calendar"></div>
 
   <!-- FullCalendar JS -->
@@ -30,7 +35,7 @@
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
-        navLinks: true,             // can click day/week names to navigate views
+        navLinks: true,
         editable: false,
         selectable: false,
         loading: function(isLoading) {
@@ -38,9 +43,11 @@
         },
         eventSources: [
           {
-            url: 'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json', // raw JSON
+            url: 'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json',
             method: 'GET',
-            extraParams: {},
+            extraParams: function() {
+              return { _: Date.now() }; // prevent caching
+            },
             failure: function() {
               alert('There was an error while fetching events.');
             }
@@ -57,6 +64,11 @@
       });
 
       calendar.render();
+
+      // Refresh button
+      document.getElementById('refresh-btn').addEventListener('click', function() {
+        calendar.refetchEvents();
+      });
     });
   </script>
 </body>
