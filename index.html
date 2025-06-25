@@ -46,9 +46,13 @@
         ];
         for (const src of sources) {
           try {
-            const res = await fetch(src + '?cb=' + Date.now());
-            if (!res.ok) throw new Error(res.statusText);
-            const arr = await res.json();
+const res = await fetch(src + '?cb=' + Date.now());
+if (!res.ok) throw new Error(res.statusText);
+// Fetch raw text and strip trailing commas
+let text = await res.text();
+text = text.replace(/,\s*\]/g, ']');
+const arr = JSON.parse(text);
+
             return arr.map(e => ({
               title: e.title,
               start: e.start.split('.')[0],
