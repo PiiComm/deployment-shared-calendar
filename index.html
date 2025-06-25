@@ -16,12 +16,13 @@
       var calendarEl = document.getElementById('calendar');
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        events: 'https://piicomm.github.io/deployment-shared-calendar/main/events.json', // Link to your JSON or https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json
+        // ← use the RAW GitHub URL (or just "events.json" if it lives alongside this page)
+        events: 'https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json',
         eventClick: function(info) {
           alert(
             'Event: ' + info.event.title + '\n' +
             'Description: ' + (info.event.extendedProps.description || '') + '\n' +
-            'Starts: ' + info.event.start
+            'Starts: ' + info.event.start.toLocaleString()
           );
         }
       });
