@@ -33,13 +33,17 @@
   <div id="calendar"></div>
 
   <script>
+    // Fix for FullCalendar global plugins
+    const dayGridPlugin = window.DayGrid;
+    const timeGridPlugin = window.TimeGrid;
+
     document.addEventListener('DOMContentLoaded', function() {
       const calendarEl = document.getElementById('calendar');
       const loadingEl = document.getElementById('loading');
       const timezoneSelect = document.getElementById('timezone-select');
-      let calendar = null;
+      let calendar;
 
-      // Helper: fetch events.json from multiple sources (fallback)
+      // Fetch events, clean trailing commas, parse JSON
       async function loadEvents() {
         const sources = [
           'events.json',
@@ -50,13 +54,12 @@
             const res = await fetch(src + '?cb=' + Date.now());
             if (!res.ok) throw new Error(res.statusText);
             let text = await res.text();
-            text = text.replace(/,\s*\]/g, ']');  // Clean trailing commas
+            text = text.replace(/,\s*\]/g, ']');  // strip trailing commas
             const arr = JSON.parse(text);
-            // Format events for FullCalendar
             return arr.map(e => ({
               title: e.title,
-              start: (e.start || '').split('.')[0],
-              end: (e.end || '').split('.')[0],
+              start: e.start.split('.')[0],
+              end: e.end.split('.')[0],
               description: e.description || ''
             }));
           } catch (err) {
@@ -66,7 +69,6 @@
         throw new Error('All event sources failed');
       }
 
-      // Initial calendar render
       async function initCalendar() {
         loadingEl.style.display = 'block';
         let events = [];
@@ -74,13 +76,12 @@
           events = await loadEvents();
         } catch (err) {
           loadingEl.style.display = 'none';
-          calendarEl.innerHTML = '<div style="color:red;font-size:1.2em;margin:2em;">Failed to load calendar events.</div>';
-          return;
+          return alert('Error loading events. See console.');
         }
         loadingEl.style.display = 'none';
 
         calendar = new FullCalendar.Calendar(calendarEl, {
-          plugins: [ FullCalendar.dayGridPlugin, FullCalendar.timeGridPlugin ],
+          plugins: [ dayGridPlugin, timeGridPlugin ],
           initialView: 'dayGridMonth',
           timeZone: timezoneSelect.value,
           height: '80vh',
@@ -89,39 +90,27 @@
           events: events,
           eventTimeFormat: { hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short' },
           eventClick(info) {
-            const s = info.event.start ? info.event.start.toLocaleString() : '';
-            alert(
-              `Event: ${info.event.title}\n` +
-              `Description: ${info.event.extendedProps.description || 'N/A'}\n` +
-              `Starts: ${s}`
-            );
+            const s = info.event.start.toLocaleString();
+            alert(`Event: ${info.event.title}\nDescription: ${info.event.extendedProps.description || 'N/A'}\nStarts: ${s}`);
           }
         });
         calendar.render();
       }
 
-      // Refresh events in the existing calendar
       async function refreshEvents() {
-        if (!calendar) return;
         loadingEl.style.display = 'block';
         try {
           const newEvents = await loadEvents();
-          calendar.removeAllEventSources();
+          calendar.getEventSources().forEach(src => src.remove());
           calendar.addEventSource(newEvents);
-          calendar.refetchEvents();
         } catch {
           alert('Error refreshing events.');
         }
         loadingEl.style.display = 'none';
       }
 
-      timezoneSelect.addEventListener('change', () => {
-        if (calendar) {
-          calendar.setOption('timeZone', timezoneSelect.value);
-        }
-      });
+      timezoneSelect.addEventListener('change', () => calendar.setOption('timeZone', timezoneSelect.value));
       document.getElementById('refresh-btn').addEventListener('click', refreshEvents);
-
       initCalendar();
     });
   </script>
