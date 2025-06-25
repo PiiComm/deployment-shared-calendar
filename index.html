@@ -2,34 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PiiComm Shared Calendar</title>
 
-  <!-- FullCalendar CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.min.css" rel="stylesheet">
+  <!-- FullCalendar CSS (global builds) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.global.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.global.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.global.min.css"
+    rel="stylesheet"
+  />
 
   <style>
-    body { margin: 0; padding: 0; font-family: sans-serif; }
-    #controls { 
-      display: flex; flex-wrap: wrap; justify-content: flex-end;
-      max-width: 95vw; margin: 20px auto; padding: 0 10px;
+    body { margin:0; padding:0; font-family:sans-serif; }
+    #controls {
+      display:flex; flex-wrap:wrap; justify-content:flex-end;
+      max-width:95vw; margin:20px auto; padding:0 10px;
     }
-    #controls label, #controls select, #controls button { margin: 4px; }
-    #calendar { 
-      width: 95vw; height: 80vh; margin: 0 auto 40px; padding: 0 10px; 
+    #controls label,#controls select,#controls button { margin:4px; }
+    #calendar {
+      width:95vw; height:80vh; margin:0 auto 40px; padding:0 10px;
     }
-    #loading { 
-      display: none; position: absolute; top: 10px; right: 10px; 
-      font-weight: bold; 
+    #loading {
+      display:none; position:absolute; top:10px; right:10px;
+      font-weight:bold;
     }
   </style>
-
-  <!-- FullCalendar JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/index.global.min.js"></script>
 </head>
 <body>
   <div id="loading">Loading...</div>
@@ -43,61 +47,57 @@
   </div>
   <div id="calendar"></div>
 
+  <!-- FullCalendar JS (global builds) -->
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.global.min.js"></script>
+
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
       const calendarEl = document.getElementById('calendar');
-      const loadingEl = document.getElementById('loading');
-      const timezoneSelect = document.getElementById('timezone-select');
+      const loadingEl  = document.getElementById('loading');
+      const tzSelect   = document.getElementById('timezone-select');
       let calendar;
 
       async function loadEvents() {
         loadingEl.style.display = 'block';
         try {
-          // Cache-bust so you always get the latest version
           const res = await fetch('events.json?cb=' + Date.now());
-          if (!res.ok) throw new Error(res.statusText);
+          if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
           let text = await res.text();
-          // Clean up any trailing commas before the closing bracket
-          text = text.replace(/,\s*\]/g, ']');
-          const arr = JSON.parse(text);
-          return arr.map(e => ({
+          text = text.replace(/,\s*\]/g, ']');  // strip trailing commas
+          return JSON.parse(text).map(e => ({
             title: e.title,
             start: e.start.split('.')[0],
-            end: e.end.split('.')[0],
+            end:   e.end.split('.')[0],
             description: e.description || ''
           }));
-        } catch (err) {
-          console.error('Error loading events.json:', err);
-          throw err;
         } finally {
           loadingEl.style.display = 'none';
         }
       }
 
       async function initCalendar() {
-        let events = [];
+        let events;
         try {
           events = await loadEvents();
-        } catch {
-          return alert('Unable to load events. Check console for details.');
+        } catch (err) {
+          return alert('Error loading events. See console.');
         }
 
         calendar = new FullCalendar.Calendar(calendarEl, {
           plugins: [ FullCalendarDayGrid, FullCalendarTimeGrid ],
           initialView: 'dayGridMonth',
-          timeZone: timezoneSelect.value,
+          timeZone: tzSelect.value,
           headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
+            left:  'prev,next today',
+            center:'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           },
           navLinks: true,
-          events: events,
+          events,
           eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            omitZeroMinute: false,
-            meridiem: 'short'
+            hour: '2-digit', minute: '2-digit', meridiem: 'short'
           },
           eventClick(info) {
             const startStr = info.event.start.toLocaleString();
@@ -114,21 +114,21 @@
 
       async function refreshEvents() {
         if (!calendar) return;
-        let newEvents = [];
+        let newEvents;
         try {
           newEvents = await loadEvents();
         } catch {
           return alert('Error refreshing events.');
         }
-        calendar.removeAllEventSources();
+        calendar.getEventSources().forEach(src => src.remove());
         calendar.addEventSource(newEvents);
       }
 
-      timezoneSelect.addEventListener('change', () => {
-        if (calendar) calendar.setOption('timeZone', timezoneSelect.value);
+      tzSelect.addEventListener('change', () => {
+        if (calendar) calendar.setOption('timeZone', tzSelect.value);
       });
       document.getElementById('refresh-btn')
-        .addEventListener('click', refreshEvents);
+              .addEventListener('click', refreshEvents);
 
       initCalendar();
     });
