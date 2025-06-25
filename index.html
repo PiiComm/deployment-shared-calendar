@@ -16,7 +16,7 @@
       var calendarEl = document.getElementById('calendar');
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        events: 'https://piicomm.github.io/yourrepo/events.json', // Link to your JSON or https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json
+        events: 'https://piicomm.github.io/deployment-shared-calendar/main/events.json', // Link to your JSON or https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json
         eventClick: function(info) {
           alert(
             'Event: ' + info.event.title + '\n' +
