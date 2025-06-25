@@ -37,8 +37,9 @@
       const calendarEl = document.getElementById('calendar');
       const loadingEl = document.getElementById('loading');
       const timezoneSelect = document.getElementById('timezone-select');
-      let calendar;
+      let calendar = null;
 
+      // Helper: fetch events.json from multiple sources (fallback)
       async function loadEvents() {
         const sources = [
           'events.json',
@@ -46,17 +47,16 @@
         ];
         for (const src of sources) {
           try {
-const res = await fetch(src + '?cb=' + Date.now());
-if (!res.ok) throw new Error(res.statusText);
-// Fetch raw text and strip trailing commas
-let text = await res.text();
-text = text.replace(/,\s*\]/g, ']');
-const arr = JSON.parse(text);
-
+            const res = await fetch(src + '?cb=' + Date.now());
+            if (!res.ok) throw new Error(res.statusText);
+            let text = await res.text();
+            text = text.replace(/,\s*\]/g, ']');  // Clean trailing commas
+            const arr = JSON.parse(text);
+            // Format events for FullCalendar
             return arr.map(e => ({
               title: e.title,
-              start: e.start.split('.')[0],
-              end: e.end.split('.')[0],
+              start: (e.start || '').split('.')[0],
+              end: (e.end || '').split('.')[0],
               description: e.description || ''
             }));
           } catch (err) {
@@ -66,6 +66,7 @@ const arr = JSON.parse(text);
         throw new Error('All event sources failed');
       }
 
+      // Initial calendar render
       async function initCalendar() {
         loadingEl.style.display = 'block';
         let events = [];
@@ -73,7 +74,8 @@ const arr = JSON.parse(text);
           events = await loadEvents();
         } catch (err) {
           loadingEl.style.display = 'none';
-          return alert('Error loading events. See console.');
+          calendarEl.innerHTML = '<div style="color:red;font-size:1.2em;margin:2em;">Failed to load calendar events.</div>';
+          return;
         }
         loadingEl.style.display = 'none';
 
@@ -87,27 +89,39 @@ const arr = JSON.parse(text);
           events: events,
           eventTimeFormat: { hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short' },
           eventClick(info) {
-            const s = info.event.start.toLocaleString();
-            alert(`Event: ${info.event.title}\nDescription: ${info.event.extendedProps.description || 'N/A'}\nStarts: ${s}`);
+            const s = info.event.start ? info.event.start.toLocaleString() : '';
+            alert(
+              `Event: ${info.event.title}\n` +
+              `Description: ${info.event.extendedProps.description || 'N/A'}\n` +
+              `Starts: ${s}`
+            );
           }
         });
         calendar.render();
       }
 
+      // Refresh events in the existing calendar
       async function refreshEvents() {
+        if (!calendar) return;
         loadingEl.style.display = 'block';
         try {
           const newEvents = await loadEvents();
-          calendar.getEventSources().forEach(src => src.remove());
+          calendar.removeAllEventSources();
           calendar.addEventSource(newEvents);
+          calendar.refetchEvents();
         } catch {
           alert('Error refreshing events.');
         }
         loadingEl.style.display = 'none';
       }
 
-      timezoneSelect.addEventListener('change', () => calendar.setOption('timeZone', timezoneSelect.value));
+      timezoneSelect.addEventListener('change', () => {
+        if (calendar) {
+          calendar.setOption('timeZone', timezoneSelect.value);
+        }
+      });
       document.getElementById('refresh-btn').addEventListener('click', refreshEvents);
+
       initCalendar();
     });
   </script>
