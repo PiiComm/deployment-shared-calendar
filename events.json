@@ -1,4 +1,10 @@
 [{
+  "title": "PiiComm-ITSM Weekly Meeting",
+  "start": "2025-06-27T03:00:00.0000000",
+  "end": "2025-06-27T04:00:00.0000000",
+  "description": ""
+},
+{
   "title": "Air Canada Service Now Time Estimate",
   "start": "2025-06-26T14:15:00.0000000",
   "end": "2025-06-26T14:30:00.0000000",
@@ -1528,10 +1534,4 @@
   "end": "2025-01-10T17:00:00.0000000",
   "description": ""
 },
-{
-  "title": "Wing night",
-  "start": "2024-12-30T22:30:00.0000000",
-  "end": "2024-12-31T01:00:00.0000000",
-  "description": ""
-}
 ]
