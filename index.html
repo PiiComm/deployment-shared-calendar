@@ -26,7 +26,7 @@
       var calendarEl = document.getElementById('calendar');
       var loadingEl = document.getElementById('loading');
 
-      // Attempt to fetch JSON from multiple sources
+      // Fetch events from local or GitHub raw JSON
       async function loadEvents() {
         var urls = [
           'events.json',
@@ -65,6 +65,7 @@
 
         var calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
+          timeZone: 'local',               // Display in browser's local time zone
           headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -72,6 +73,9 @@
           },
           navLinks: true,
           events: events,
+          eventTimeFormat: {
+            hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short'
+          },
           eventClick: function(info) {
             var s = info.event.start.toLocaleString();
             alert(
