@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PiiComm Shared Calendar</title>
-  <!-- FullCalendar JS (injects its own CSS in v6+) --><script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <!-- FullCalendar JS (v6+ injects its own CSS) -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
     #controls { max-width: 900px; margin: 20px auto; text-align: right; padding: 0 10px; }
@@ -31,10 +32,20 @@
         navLinks: true,
         loading: function(isLoading) { loadingEl.style.display = isLoading ? 'block' : 'none'; },
         eventSources: [{
-          url: 'events.json',            // serve from same origin
+          url: 'events.json',            // local file in same directory
           method: 'GET',
           extraParams: function() { return { _: Date.now() }; }, // cache-busting
-          failure: function() { alert('Error fetching events. Make sure events.json is in this folder.'); }
+          failure: function() { alert('Error fetching events. Make sure events.json is present.'); },
+          eventDataTransform: function(eventData) {
+            // Strip excess fractional seconds (FullCalendar expects up to 3 digits)
+            if (eventData.start) {
+              eventData.start = eventData.start.split('.')[0];
+            }
+            if (eventData.end) {
+              eventData.end = eventData.end.split('.')[0];
+            }
+            return eventData;
+          }
         }],
         eventClick: function(info) {
           alert(
@@ -46,7 +57,9 @@
       });
 
       calendar.render();
-      document.getElementById('refresh-btn').addEventListener('click', function() { calendar.refetchEvents(); });
+      document.getElementById('refresh-btn').addEventListener('click', function() {
+        calendar.refetchEvents();
+      });
     });
   </script>
 </body>
