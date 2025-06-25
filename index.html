@@ -5,18 +5,23 @@
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <style>
-    body { margin: 0; padding: 0; }
-    #calendar { max-width: 900px; margin: 40px auto; }
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #controls { max-width: 900px; margin: 20px auto; text-align: right; }
+    #controls button { margin-left: 8px; padding: 6px 12px; font-size: 14px; }
+    #calendar { max-width: 900px; margin: 20px auto; }
   </style>
 </head>
 <body>
+  <div id='controls'>
+    <button id='hard-refresh-btn'>Hard Refresh ↻</button>
+  </div>
   <div id='calendar'></div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var calendarEl = document.getElementById('calendar');
       var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        // ← use the RAW GitHub URL (or just "events.json" if it lives alongside this page)
         events: 'https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json',
         eventClick: function(info) {
           alert(
@@ -26,7 +31,14 @@
           );
         }
       });
+
       calendar.render();
+
+      // Hard refresh button: forces full page reload, bypassing cache
+      document.getElementById('hard-refresh-btn').addEventListener('click', function() {
+        // true forces reload from server (bypass cache)
+        window.location.reload(true);
+      });
     });
   </script>
 </body>
