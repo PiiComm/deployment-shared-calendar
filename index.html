@@ -1,136 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PiiComm Shared Calendar</title>
-
-  <!-- FullCalendar CSS (global builds) -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.global.min.css"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.global.min.css"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.global.min.css"
-    rel="stylesheet"
-  />
-
+  <meta charset='utf-8' />
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <style>
-    body { margin:0; padding:0; font-family:sans-serif; }
-    #controls {
-      display:flex; flex-wrap:wrap; justify-content:flex-end;
-      max-width:95vw; margin:20px auto; padding:0 10px;
-    }
-    #controls label,#controls select,#controls button { margin:4px; }
-    #calendar {
-      width:95vw; height:80vh; margin:0 auto 40px; padding:0 10px;
-    }
-    #loading {
-      display:none; position:absolute; top:10px; right:10px;
-      font-weight:bold;
-    }
+    body { margin: 0; padding: 0; }
+    #calendar { max-width: 900px; margin: 40px auto; }
   </style>
 </head>
 <body>
-  <div id="loading">Loading...</div>
-  <div id="controls">
-    <label for="timezone-select">Timezone:</label>
-    <select id="timezone-select">
-      <option value="local">Local</option>
-      <option value="UTC">UTC</option>
-    </select>
-    <button id="refresh-btn">Refresh Events</button>
-  </div>
-  <div id="calendar"></div>
-
-  <!-- FullCalendar JS (global builds) -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.global.min.js"></script>
-
+  <div id='calendar'></div>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const calendarEl = document.getElementById('calendar');
-      const loadingEl  = document.getElementById('loading');
-      const tzSelect   = document.getElementById('timezone-select');
-      let calendar;
-
-      async function loadEvents() {
-        loadingEl.style.display = 'block';
-        try {
-          const res = await fetch('events.json?cb=' + Date.now());
-          if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-          let text = await res.text();
-          text = text.replace(/,\s*\]/g, ']');  // strip trailing commas
-          return JSON.parse(text).map(e => ({
-            title: e.title,
-            start: e.start.split('.')[0],
-            end:   e.end.split('.')[0],
-            description: e.description || ''
-          }));
-        } finally {
-          loadingEl.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: 'https://piicomm.github.io/yourrepo/events.json', // Link to your JSON or https://raw.githubusercontent.com/piicomm/deployment-shared-calendar/main/events.json
+        eventClick: function(info) {
+          alert(
+            'Event: ' + info.event.title + '\n' +
+            'Description: ' + (info.event.extendedProps.description || '') + '\n' +
+            'Starts: ' + info.event.start
+          );
         }
-      }
-
-      async function initCalendar() {
-        let events;
-        try {
-          events = await loadEvents();
-        } catch (err) {
-          return alert('Error loading events. See console.');
-        }
-
-        calendar = new FullCalendar.Calendar(calendarEl, {
-          plugins: [ FullCalendarDayGrid, FullCalendarTimeGrid ],
-          initialView: 'dayGridMonth',
-          timeZone: tzSelect.value,
-          headerToolbar: {
-            left:  'prev,next today',
-            center:'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          },
-          navLinks: true,
-          events,
-          eventTimeFormat: {
-            hour: '2-digit', minute: '2-digit', meridiem: 'short'
-          },
-          eventClick(info) {
-            const startStr = info.event.start.toLocaleString();
-            alert(
-              `Event: ${info.event.title}\n` +
-              `Description: ${info.event.extendedProps.description}\n` +
-              `Starts: ${startStr}`
-            );
-          }
-        });
-
-        calendar.render();
-      }
-
-      async function refreshEvents() {
-        if (!calendar) return;
-        let newEvents;
-        try {
-          newEvents = await loadEvents();
-        } catch {
-          return alert('Error refreshing events.');
-        }
-        calendar.getEventSources().forEach(src => src.remove());
-        calendar.addEventSource(newEvents);
-      }
-
-      tzSelect.addEventListener('change', () => {
-        if (calendar) calendar.setOption('timeZone', tzSelect.value);
       });
-      document.getElementById('refresh-btn')
-              .addEventListener('click', refreshEvents);
-
-      initCalendar();
+      calendar.render();
     });
   </script>
 </body>
