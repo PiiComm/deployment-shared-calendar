@@ -8,13 +8,13 @@
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.8/main.min.css" rel="stylesheet" />
-  <!-- FullCalendar JS (v6+ injects its own CSS) --> (v6+ injects its own CSS) -->
+  <!-- FullCalendar JS (v6+ injects its own CSS) -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: sans-serif; }
-    #controls { max-width: 900px; margin: 20px auto; text-align: right; padding: 0 10px; }
-    #controls select, #controls button { margin-left: 8px; }
-    #calendar { max-width: 900px; margin: 0 auto 40px; padding: 0 10px; }
+    #controls { display: flex; flex-wrap: wrap; justify-content: flex-end; max-width: 95vw; margin: 20px auto; padding: 0 10px; }
+    #controls label, #controls select, #controls button { margin: 4px; }
+    #calendar { width: 95vw; height: 80vh; margin: 0 auto 40px; padding: 0 10px; }
     #loading { display: none; position: absolute; top: 10px; right: 10px; font-weight: bold; }
   </style>
 </head>
@@ -32,22 +32,20 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      var calendarEl = document.getElementById('calendar');
-      var loadingEl = document.getElementById('loading');
-      var timezoneSelect = document.getElementById('timezone-select');
-      var calendar;
+      const calendarEl = document.getElementById('calendar');
+      const loadingEl = document.getElementById('loading');
+      const timezoneSelect = document.getElementById('timezone-select');
+      let calendar;
 
-      // Fetch and normalize events
       async function loadEvents() {
         const urls = [
           'events.json',
           'https://raw.githubusercontent.com/PiiComm/deployment-shared-calendar/main/events.json'
         ];
-        for (let base of urls) {
-          const url = base + '?cb=' + Date.now();
+        for (const base of urls) {
           try {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const resp = await fetch(base + '?cb=' + Date.now());
+            if (!resp.ok) throw new Error(resp.statusText);
             const arr = await resp.json();
             return arr.map(e => ({
               title: e.title,
@@ -56,13 +54,12 @@
               description: e.description || ''
             }));
           } catch (err) {
-            console.warn('Failed to load events from', base, err);
+            console.warn('Failed to load from', base, err);
           }
         }
         throw new Error('All event sources failed');
       }
 
-      // Initialize calendar with events and current timezone
       async function initCalendar() {
         loadingEl.style.display = 'block';
         let events = [];
@@ -70,13 +67,14 @@
           events = await loadEvents();
         } catch (err) {
           loadingEl.style.display = 'none';
-          return alert('Error loading events. Check console for details.');
+          return alert('Error loading events. Check console.');
         }
         loadingEl.style.display = 'none';
 
         calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
           timeZone: timezoneSelect.value,
+          height: '80vh',
           headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -87,40 +85,32 @@
           eventTimeFormat: {
             hour: '2-digit', minute: '2-digit', omitZeroMinute: false, meridiem: 'short'
           },
-          eventClick: function(info) {
+          eventClick(info) {
             const s = info.event.start.toLocaleString();
-            alert(
-              'Event: ' + info.event.title + '\n' +
-              'Description: ' + (info.event.extendedProps.description || 'N/A') + '\n' +
-              'Starts: ' + s
-            );
+            alert(`Event: ${info.event.title}\nDescription: ${info.event.extendedProps.description || 'N/A'}\nStarts: ${s}`);
           }
         });
+
         calendar.render();
       }
 
-      // Refresh events
       async function refreshEvents() {
         loadingEl.style.display = 'block';
         try {
           const newEvents = await loadEvents();
-          calendar.removeAllEventSources();
+          calendar.getEventSources().forEach(src => src.remove());
           calendar.addEventSource(newEvents);
-        } catch (err) {
+        } catch {
           alert('Error refreshing events.');
         }
         loadingEl.style.display = 'none';
       }
 
-      // Setup event handlers
-      timezoneSelect.addEventListener('change', function() {
-        if (calendar) {
-          calendar.setOption('timeZone', this.value);
-        }
+      timezoneSelect.addEventListener('change', () => {
+        if (calendar) calendar.setOption('timeZone', timezoneSelect.value);
       });
       document.getElementById('refresh-btn').addEventListener('click', refreshEvents);
 
-      // Kick off
       initCalendar();
     });
   </script>
