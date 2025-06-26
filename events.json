@@ -53,12 +53,6 @@
   "description": ""
 },
 {
-  "title": "Kemptville Property Inspection",
-  "start": "2025-06-26T14:00:00.0000000",
-  "end": "2025-06-26T15:00:00.0000000",
-  "description": ""
-},
-{
   "title": "Test",
   "start": "2025-06-21T02:15:00.0000000",
   "end": "2025-06-21T03:15:00.0000000",
@@ -1532,6 +1526,12 @@
   "title": "Oscar - NoReply Email for Order Confirmations",
   "start": "2025-01-03T15:00:00.0000000",
   "end": "2025-01-03T15:45:00.0000000",
+  "description": ""
+},
+{
+  "title": "PiiComm Site Visit",
+  "start": "2025-01-10T12:30:00.0000000",
+  "end": "2025-01-10T17:00:00.0000000",
   "description": ""
 },
 ]
