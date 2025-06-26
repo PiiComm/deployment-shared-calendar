@@ -1,10 +1,4 @@
 [{
-  "title": "Funding Meeting Review",
-  "start": "2025-06-26T19:00:00.0000000",
-  "end": "2025-06-26T20:00:00.0000000",
-  "description": ""
-},
-{
   "title": "PiiComm-ITSM Weekly Meeting",
   "start": "2025-06-26T15:00:00.0000000",
   "end": "2025-06-26T16:00:00.0000000",
@@ -1532,6 +1526,12 @@
   "title": "PiiComm Site Visit",
   "start": "2025-01-10T12:30:00.0000000",
   "end": "2025-01-10T17:00:00.0000000",
+  "description": ""
+},
+{
+  "title": "Wing night",
+  "start": "2024-12-30T22:30:00.0000000",
+  "end": "2024-12-31T01:00:00.0000000",
   "description": ""
 },
 ]
